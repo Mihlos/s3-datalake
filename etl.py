@@ -5,13 +5,11 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, col
 from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, date_format
 
-
 config = configparser.ConfigParser()
-config.read('dl.cfg')
+config.read_file(open('dl.cfg'))
 
-os.environ['AWS_ACCESS_KEY_ID']=config['AWS_ACCESS_KEY_ID']
-os.environ['AWS_SECRET_ACCESS_KEY']=config['AWS_SECRET_ACCESS_KEY']
-
+os.environ['AWS_ACCESS_KEY_ID']=config['AWS']["AWS_ACCESS_KEY_ID"]
+os.environ['AWS_SECRET_ACCESS_KEY']=config['AWS']["AWS_SECRET_ACCESS_KEY"]
 
 def create_spark_session():
     spark = SparkSession \
@@ -23,62 +21,63 @@ def create_spark_session():
 
 def process_song_data(spark, input_data, output_data):
     # get filepath to song data file
-    song_data = input_data+'song_data
+    song_data = input_data+'song_data'
     
     # read song data file
-    df = spark.read.json(song_data)
-
-    # extract columns to create songs table
-    songs_table = 
+    df = spark.read.json("s3a://{}:{}@udacity-dend/song_data/A/B/C/TRABCEI128F424C983.json".format(os.environ['AWS_ACCESS_KEY_ID'],os.environ['AWS_SECRET_ACCESS_KEY']))
+#     df = spark.read.json(song_data)
+    return df.show(1)
+#     # extract columns to create songs table
+#     songs_table = 
     
-    # write songs table to parquet files partitioned by year and artist
-    songs_table
+#     # write songs table to parquet files partitioned by year and artist
+#     songs_table
 
-    # extract columns to create artists table
-    artists_table = 
+#     # extract columns to create artists table
+#     artists_table = 
     
-    # write artists table to parquet files
-    artists_table
+#     # write artists table to parquet files
+#     artists_table
 
 
-def process_log_data(spark, input_data, output_data):
-    # get filepath to log data file
-    log_data =
+# def process_log_data(spark, input_data, output_data):
+#     # get filepath to log data file
+#     log_data =
 
-    # read log data file
-    df = 
+#     # read log data file
+#     df = 
     
-    # filter by actions for song plays
-    df = 
+#     # filter by actions for song plays
+#     df = 
 
-    # extract columns for users table    
-    artists_table = 
+#     # extract columns for users table    
+#     artists_table = 
     
-    # write users table to parquet files
-    artists_table
+#     # write users table to parquet files
+#     artists_table
 
-    # create timestamp column from original timestamp column
-    get_timestamp = udf()
-    df = 
+#     # create timestamp column from original timestamp column
+#     get_timestamp = udf()
+#     df = 
     
-    # create datetime column from original timestamp column
-    get_datetime = udf()
-    df = 
+#     # create datetime column from original timestamp column
+#     get_datetime = udf()
+#     df = 
     
-    # extract columns to create time table
-    time_table = 
+#     # extract columns to create time table
+#     time_table = 
     
-    # write time table to parquet files partitioned by year and month
-    time_table
+#     # write time table to parquet files partitioned by year and month
+#     time_table
 
-    # read in song data to use for songplays table
-    song_df = 
+#     # read in song data to use for songplays table
+#     song_df = 
 
-    # extract columns from joined song and log datasets to create songplays table 
-    songplays_table = 
+#     # extract columns from joined song and log datasets to create songplays table 
+#     songplays_table = 
 
-    # write songplays table to parquet files partitioned by year and month
-    songplays_table
+#     # write songplays table to parquet files partitioned by year and month
+#     songplays_table
 
 
 def main():
@@ -86,7 +85,8 @@ def main():
     input_data = "s3a://udacity-dend/"
     output_data = "s3a://misho-udacity-bucket/datalake"
     
-    process_song_data(spark, input_data, output_data)    
+    df = process_song_data(spark, input_data, output_data)
+    print(df)
 #     process_log_data(spark, input_data, output_data)
 
 
