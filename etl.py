@@ -24,20 +24,23 @@ def process_song_data(spark, input_data, output_data):
     song_data = input_data+'song_data'
     
     # read song data file
-    df = spark.read.json("s3a://{}:{}@udacity-dend/song_data/A/B/C/TRABCEI128F424C983.json".format(os.environ['AWS_ACCESS_KEY_ID'],os.environ['AWS_SECRET_ACCESS_KEY']))
+    df = spark.read.json("s3a://{}:{}@udacity-dend/song_data/A/B/C/TRABCEI128F424C983.json"\
+                         .format(os.environ['AWS_ACCESS_KEY_ID'],os.environ['AWS_SECRET_ACCESS_KEY']))
 #     df = spark.read.json(song_data)
-    return df.show(1)
-#     # extract columns to create songs table
-#     songs_table = 
-    
-#     # write songs table to parquet files partitioned by year and artist
-#     songs_table
 
-#     # extract columns to create artists table
-#     artists_table = 
+    # extract columns to create songs table
+    song_columns = ['song_id', 'title', 'artist_id', 'year', 'duration']
+    songs_table = df.select(*song_columns)
     
-#     # write artists table to parquet files
-#     artists_table
+    # write songs table to parquet files partitioned by year and artist
+    songs_table.write.partitionBy("year", "artist_id").parquet(output_data+'/songs/')
+    
+    # extract columns to create artists table
+    artist_columns = ['artist_id', 'artist_name', 'artist_location', 'artist_latitude', 'artist_longitude']
+    artists_table = df.select(*artist_columns)
+    
+    # write artists table to parquet files
+    artists_table.write.parquet(output_data+'/artists/')
 
 
 # def process_log_data(spark, input_data, output_data):
@@ -85,8 +88,8 @@ def main():
     input_data = "s3a://udacity-dend/"
     output_data = "s3a://misho-udacity-bucket/datalake"
     
-    df = process_song_data(spark, input_data, output_data)
-    print(df)
+    process_song_data(spark, input_data, output_data)
+
 #     process_log_data(spark, input_data, output_data)
 
 
