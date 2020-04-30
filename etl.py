@@ -24,7 +24,8 @@ def process_song_data(spark, input_data, output_data):
     song_data = input_data+'song_data'
     
     # read song data file
-    df = spark.read.json("s3a://{}:{}@udacity-dend/song_data/A/B/C/TRABCEI128F424C983.json"\
+    # I had problems with auth, this way works but I'm not using song_data var.
+    df = spark.read.json("s3a://{}:{}@udacity-dend/song_data/A/A/*/*.json"\
                          .format(os.environ['AWS_ACCESS_KEY_ID'],os.environ['AWS_SECRET_ACCESS_KEY']))
 #     df = spark.read.json(song_data)
 
@@ -43,21 +44,23 @@ def process_song_data(spark, input_data, output_data):
     artists_table.write.parquet(output_data+'/artists/', mode='overwrite')
 
 
-# def process_log_data(spark, input_data, output_data):
-#     # get filepath to log data file
-#     log_data =
+def process_log_data(spark, input_data, output_data):
+    # get filepath to log data file
+    log_data = input_data+'log_data'
 
-#     # read log data file
-#     df = 
+    # read log data file
+    df = spark.read.json("s3a://{}:{}@udacity-dend/log_data/2018/11/*.json"\
+                      .format(os.environ['AWS_ACCESS_KEY_ID'],os.environ['AWS_SECRET_ACCESS_KEY']))
     
-#     # filter by actions for song plays
-#     df = 
+    # filter by actions for song plays
+    df = df.filter(df['page']=='NextSong')
 
-#     # extract columns for users table    
-#     artists_table = 
+    # extract columns for users table
+    users_columns = ['userId', 'firstName', 'lastName', 'gender', 'level']
+    users_table = df.select(*users_columns)
     
-#     # write users table to parquet files
-#     artists_table
+    # write users table to parquet files
+    users_table.write.parquet(output_data+'/users', mode='overwrite')
 
 #     # create timestamp column from original timestamp column
 #     get_timestamp = udf()
@@ -88,9 +91,8 @@ def main():
     input_data = "s3a://udacity-dend/"
     output_data = "s3a://misho-udacity-bucket/datalake"
     
-    process_song_data(spark, input_data, output_data)
-
-#     process_log_data(spark, input_data, output_data)
+#     process_song_data(spark, input_data, output_data)
+    process_log_data(spark, input_data, output_data)
 
 
 if __name__ == "__main__":
