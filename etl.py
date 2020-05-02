@@ -25,6 +25,7 @@ def process_song_data(spark, input_data, output_data):
     
     # read song data file
     # I had problems with auth, this way works but I'm not using song_data var.
+    # Smaller data because with all data it takes too long
     df = spark.read.json("s3a://{}:{}@udacity-dend/song_data/A/A/*/*.json"\
                          .format(os.environ['AWS_ACCESS_KEY_ID'],os.environ['AWS_SECRET_ACCESS_KEY']))
 #     df = spark.read.json(song_data)
@@ -49,7 +50,7 @@ def process_log_data(spark, input_data, output_data):
     log_data = input_data+'log_data'
 
     # read log data file
-    df = spark.read.json("s3a://{}:{}@udacity-dend/log_data/2018/11/*.json"\
+    df = spark.read.json("s3a://{}:{}@udacity-dend/log_data/*/*/*.json"\
                       .format(os.environ['AWS_ACCESS_KEY_ID'],os.environ['AWS_SECRET_ACCESS_KEY']))
     
     # filter by actions for song plays
@@ -67,14 +68,21 @@ def process_log_data(spark, input_data, output_data):
 #     df = 
     
 #     # create datetime column from original timestamp column
-#     get_datetime = udf()
-#     df = 
+    df = df.withColumn('datetime', from_unixtime(col('ts')/1000))
     
 #     # extract columns to create time table
-#     time_table = 
-    
+    df_time = df.select('datetime')
+    time_table = df_time.withColumnRenamed('datetime', 'start_time')\
+                         .orderBy('start_time', ascending=True)\
+                         .withColumn('hour', hour(col('start_time')))\
+                         .withColumn('day', dayofmonth(col('start_time')))\
+                         .withColumn('week', weekofyear(col('start_time')))\
+                         .withColumn('month', month(col('start_time')))\
+                         .withColumn('year', year(col('start_time')))\
+                         .withColumn('weekday', dayofweek(col('start_time')))
+
 #     # write time table to parquet files partitioned by year and month
-#     time_table
+    time_table.write.parquet(output_data+'/time', mode='overwrite', partitionBy=['year', 'month'])
 
 #     # read in song data to use for songplays table
 #     song_df = 
