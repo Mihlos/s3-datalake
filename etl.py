@@ -91,7 +91,7 @@ def process_log_data(spark, input_data, output_data):
 
     # extract columns for users table
     users_columns = ['userId', 'firstName', 'lastName', 'gender', 'level']
-    users_table = df.select(*users_columns)
+    users_table = df.select(*users_columns).dropDuplicates()
     
     # write users table to parquet files
     users_table.write.parquet(output_data+'/users', mode='overwrite')
@@ -100,7 +100,7 @@ def process_log_data(spark, input_data, output_data):
     df = df.withColumn('datetime', from_unixtime(col('ts')/1000))
     
     # extract columns to create time table
-    df_time = df.select('datetime')
+    df_time = df.select('datetime').dropDuplicates()
     time_table = df_time.withColumnRenamed('datetime', 'start_time')\
                          .orderBy('start_time', ascending=True)\
                          .withColumn('hour', hour(col('start_time')))\
