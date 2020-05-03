@@ -45,11 +45,9 @@ def process_song_data(spark, input_data, output_data):
     song_data = input_data+'song_data'
     
     # read song data file
-    # I had problems with auth, this way works but I'm not using song_data var.
-    # Smaller data because with all data it takes too long
-    df = spark.read.json("s3a://{}:{}@udacity-dend/song_data/A/A/*/*.json"\
+    # Smaller data to test: s3a://{}:{}@udacity-dend/song_data/A/A/A/*.json
+    df = spark.read.json("s3a://{}:{}@udacity-dend/song_data/*/*/*/*.json"\
                          .format(os.environ['AWS_ACCESS_KEY_ID'],os.environ['AWS_SECRET_ACCESS_KEY']))
-#     df = spark.read.json(song_data)
 
     # extract columns to create songs table
     song_columns = ['song_id', 'title', 'artist_id', 'year', 'duration']
@@ -84,6 +82,7 @@ def process_log_data(spark, input_data, output_data):
     log_data = input_data+'log_data'
 
     # read log data file
+    # smaller data to test: s3a://{}:{}@udacity-dend/log_data/2018/11/2018-11-12*.json
     df = spark.read.json("s3a://{}:{}@udacity-dend/log_data/*/*/*.json"\
                       .format(os.environ['AWS_ACCESS_KEY_ID'],os.environ['AWS_SECRET_ACCESS_KEY']))
     
@@ -95,16 +94,12 @@ def process_log_data(spark, input_data, output_data):
     users_table = df.select(*users_columns)
     
     # write users table to parquet files
-#     users_table.write.parquet(output_data+'/users', mode='overwrite')
-
-#     # create timestamp column from original timestamp column
-#     get_timestamp = udf()
-#     df = 
+    users_table.write.parquet(output_data+'/users', mode='overwrite')
     
-#     # create datetime column from original timestamp column
+    # create datetime column from original timestamp column
     df = df.withColumn('datetime', from_unixtime(col('ts')/1000))
     
-#     # extract columns to create time table
+    # extract columns to create time table
     df_time = df.select('datetime')
     time_table = df_time.withColumnRenamed('datetime', 'start_time')\
                          .orderBy('start_time', ascending=True)\
@@ -115,18 +110,26 @@ def process_log_data(spark, input_data, output_data):
                          .withColumn('year', year(col('start_time')))\
                          .withColumn('weekday', dayofweek(col('start_time')))
 
-#     # write time table to parquet files partitioned by year and month
-#     time_table.write.parquet(output_data+'/time', mode='overwrite', partitionBy=['year', 'month'])
+    # write time table to parquet files partitioned by year and month
+    time_table.write.parquet(output_data+'/time', mode='overwrite', partitionBy=['year', 'month'])
 
     # read in song data to use for songplays table
     basePath= output_data+'/songs/'
     song_df = spark.read.option("basePath",basePath).parquet(output_data+'/songs/*')
 
     # extract columns from joined song and log datasets to create songplays table 
-    songplays_table = 
+    songplays_table = df.join(song_df, df.song == song_df.title, how='left')
+    songplays_table = songplays_table.drop('song', 'artist', 'title', 'year', 'duration')
+    
+    columns_name = ['start_time', 'user_id', 'level', 'session_id', 'location', 'user_agent', 'song_id', 'artist_id']
+    songplays_table = songplays_table.toDF(*columns_name)
+    songplays_table = songplays_table.withColumn('month', month(col('start_time')))\
+                                     .withColumn('year', year(col('start_time')))
 
-#    # write songplays table to parquet files partitioned by year and month
-#     songplays_table.write.parquet(output_data+'/songplays', mode='overwrite', partitionBy=['year', 'month'])
+   # write songplays table to parquet files partitioned by year and month
+    songplays_table.write.parquet(output_data+'/songplays', 
+                                  mode='overwrite', 
+                                  partitionBy=['year', 'month'])
 
 
 def main():
@@ -146,7 +149,7 @@ def main():
     input_data = "s3a://udacity-dend/"
     output_data = "s3a://misho-udacity-bucket/datalake"
     
-#     process_song_data(spark, input_data, output_data)
+    process_song_data(spark, input_data, output_data)
     process_log_data(spark, input_data, output_data)
 
 
